@@ -29,4 +29,6 @@ class usblink_async {
 		};
 };
 
+extern class usblink_async *usblink_get_async(class usblink_async::listener *listener);
+
 #endif

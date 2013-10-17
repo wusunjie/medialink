@@ -17,4 +17,6 @@ class usblink_sync {
 		virtual bool usblink_sync_set_mfps(unsigned char mfps) = 0;
 };
 
+extern class usblink_sync *usblink_get_sync(void);
+
 #endif
