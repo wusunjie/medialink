@@ -3,32 +3,33 @@
 
 #include "usblink_common.h"
 
-class usblink_async {
-	public:
-		virtual ~usblink_async(void) = 0;
-		virtual void usblink_async_get_version(
-				unsigned char majar,
-				unsigned char minor) = 0;
-		virtual void usblink_async_get_params(void) = 0;
-		virtual void usblink_async_set_config(struct usblink_config *config) = 0;
-		virtual void usblink_async_start_fb_trans(enum usblink_trans_mode mode) = 0;
-		virtual void usblink_async_pause_fb_trans(void) = 0;
-		virtual void usblink_async_stop_fb_trans(void) = 0;
-		virtual void usblink_async_set_mfps(unsigned char mfps) = 0;
-		class listener {
-			public:
-				virtual void usblink_async_get_version_finish(
-						struct usblink_version *version) = 0;
-				virtual void usblink_async_get_params_finish(
-						struct usblink_params *params) = 0;
-				virtual void usblink_async_set_config_finish(bool result) = 0;
-				virtual void usblink_async_start_fb_trans_finish(bool result) = 0;
-				virtual void usblink_async_pause_fb_trans_finish(bool result) = 0;
-				virtual void usblink_async_stop_fb_trans(bool result) = 0;
-				virtual void usblink_async_set_mfps_finish(bool result) = 0;
-		};
+struct usbliink_async_priv;
+
+struct usblink_async {
+	struct usblink_async_priv *impl;
+	struct usblink_async_callback *cb;
 };
 
-extern class usblink_async *usblink_get_async(class usblink_async::listener *listener);
+struct usblink_async *usblink_async_init(struct usblink_async_callback *cb);
+void usblink_async_get_version(struct usblink_async *async, struct usblink_version *version);
+void usblink_async_get_params(struct usblink_async *async);
+void usblink_async_set_config(struct usblink_async *async, struct usblink_config *config);
+void usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode);
+void usblink_async_pause_fb_trans(struct usblink_async *async);
+void usblink_async_stop_fb_trans(struct usblink_async *async);
+void usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps);
+void usblink_async_destory(struct usblink_async *async);
+
+struct usblink_async_callback {
+	void (*usblink_async_get_version_finish)(
+			struct usblink_version *version);
+	void (*usblink_async_get_params_finish)(
+			struct usblink_params *params);
+	void (*usblink_async_set_config_finish)(unsigned char result);
+	void (*usblink_async_start_fb_trans_finish)(unsigned char result);
+	void (*usblink_async_pause_fb_trans_finish)(unsigned char result);
+	void (*usblink_async_stop_fb_transA)(unsigned char result);
+	void (*usblink_async_set_mfps_finish)(unsigned char result);
+};
 
 #endif
