@@ -31,10 +31,10 @@ static void usblink_async_destory_later(struct usblink_async *async, unsigned ch
 
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 {
+	assert(transfer);
 	struct usblink_version version;
 	struct usblink_async *async = (struct usblink_async *)(transfer->user_data);
 	struct usblink_async_priv *impl = async->impl;
-	assert(transfer);
 	switch (transfer->status) {
 		case LIBUSB_TRANSFER_COMPLETED:
 			{
