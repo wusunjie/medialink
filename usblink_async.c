@@ -1,6 +1,7 @@
 #include "public/usblink_async.h"
 
 #include "libusb.h"
+#include "usblink_const.h"
 
 #include "stdlib.h"
 #include "stdint.h"
@@ -9,7 +10,7 @@ enum usblink_async_type {
 	USBLINK_ASYNC_TYPE_NONE,
 	USBLINK_ASYNC_TYPE_GET_VERSION,
 	USBLINK_ASYNC_TYPE_GET_PARAMS
-}
+};
 
 struct usblink_async_priv {
 	struct libusb_context *context;
@@ -26,15 +27,16 @@ struct usblink_async_priv {
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer);
 static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl, struct libusb_transfer *transfer);
-static void usblink_async_destory_later(struct usblink_async_priv *impl, unsigned char ctrl_bulk);
+static void usblink_async_destory_later(struct usblink_async *async, unsigned char ctrl_bulk);
 
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 {
 	struct usblink_version version;
-	struct usblink_async_priv *impl = (struct usblink_async_priv *)(transfer->user_data)->impl;
+	struct usblink_async *async = (struct usblink_async *)(transfer->user_data);
+	struct usblink_async_priv *impl = async->impl;
 	assert(transfer);
 	switch (transfer->status) {
-		case LIBUSB_TRANSFER_COMPLETE:
+		case LIBUSB_TRANSFER_COMPLETED:
 			{
 				usblink_async_ctrl_transfer_complete(impl, transfer);
 			}
@@ -42,7 +44,7 @@ static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 		default:
 			break;
 	}
-	usblink_destory_later(impl, 0);
+	usblink_async_destory_later(async, 0);
 }
 
 static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl, struct libusb_transfer *transfer)
@@ -84,10 +86,10 @@ static libusb_device_handle *usblink_async_find_device(struct libusb_context *co
 	struct libusb_device *device = 0;
 	struct libusb_device_handle *handle = 0;
 	struct libusb_device_descriptor descriptor;
-	ssize_t cnt = 0;
+	ssize_t cnt = 0, i;
 	cnt = libusb_get_device_list(context, &list);
 	assert(list);
-	for (ssize_t i = 0; i < cnt; i++) {
+	for (i = 0; i < cnt; i++) {
 		libusb_get_device_descriptor(list[i], &descriptor);
 		if ((USBLINK_CLASS == descriptor.bDeviceClass)
 				&& (USBLINK_SUB_CLASS == descriptor.bDeviceSubClass)
@@ -96,41 +98,42 @@ static libusb_device_handle *usblink_async_find_device(struct libusb_context *co
 			break;
 		}
 	}
-	libusb_free_device_list(list);
+	libusb_free_device_list(list, 1);
 	if (0 != device) {
 		libusb_open(device, &handle);
 	}
 	return handle;
 }
 
-static void usblink_async_destory_later(struct usblink_async_priv *impl, unsigned char ctrl_bulk)
+static void usblink_async_destory_later(struct usblink_async *async, unsigned char ctrl_bulk)
 {
+	assert(async && async->impl);
 	switch (ctrl_bulk) {
 		case 0:
 			{
-				if (1 == impl->destory) {
-					libusb_free_transfer(impl->ctrl);
-					impl->ctrl = 0;
+				if (1 == async->impl->destory) {
+					libusb_free_transfer(async->impl->ctrl);
+					async->impl->ctrl = 0;
 				}
 			}
 			break;
 		case 1:
 			{
-				if (1 == impl->destory) {
-					libusb_free_transfer(impl->bulk);
-					impl->bulk = 0;
+				if (1 == async->impl->destory) {
+					libusb_free_transfer(async->impl->bulk);
+					async->impl->bulk = 0;
 				}
 			}
 			break;
 		default:
 			break;
 	}
-	if ((0 == impl->ctrl)
-			&& (0 == impl->bulk)) {
-		libusb_release_interface(impl->handle, 0);
-		libusb_close(impl->handle);
-		libusb_exit(impl->context);
-		free((struct usblink_async *)&impl);
+	if ((0 == async->impl->ctrl)
+			&& (0 == async->impl->bulk)) {
+		libusb_release_interface(async->impl->handle, 0);
+		libusb_close(async->impl->handle);
+		libusb_exit(async->impl->context);
+		free(async);
 	}
 }
 
@@ -151,13 +154,13 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
 	async->impl = impl;
-	return sync;
+	return async;
 }
 
 void usblink_async_destory(struct usblink_async *async)
 {
 	assert(async);
-	async->destory = 1;
+	async->impl->destory = 1;
 }
 
 int usblink_async_get_version(struct usblink_async *async, struct usblink_version *version)
@@ -175,7 +178,7 @@ int usblink_async_get_version(struct usblink_async *async, struct usblink_versio
 	async->impl->event = USBLINK_ASYNC_TYPE_GET_VERSION;
 	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
 			ctrl_buffer, usblink_async_ctrl_transfer_cb,
-			async->impl, USBLINK_CTRL_TRANSFER_TIMEOUT);
+			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
 	assert(async->impl);
 	return libusb_submit_transfer(async->impl->ctrl);
 }
@@ -183,7 +186,7 @@ int usblink_async_get_version(struct usblink_async *async, struct usblink_versio
 int usblink_async_get_params(struct usblink_async *async)
 {
 	unsigned char *ctrl_buffer = 0;
-	assert(async && version);
+	assert(async);
 	ctrl_buffer = (unsigned char *)malloc(USBLINK_GET_PARAMS_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
 	assert(ctrl_buffer);
 	libusb_fill_control_setup(ctrl_buffer,
@@ -195,7 +198,7 @@ int usblink_async_get_params(struct usblink_async *async)
 	async->impl->event = USBLINK_ASYNC_TYPE_GET_PARAMS;
 	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
 			ctrl_buffer, usblink_async_ctrl_transfer_cb,
-			async->impl, USBLINK_CTRL_TRANSFER_TIMEOUT);
+			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
 	assert(async->impl);
 	return libusb_submit_transfer(async->impl->ctrl);
 
