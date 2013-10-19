@@ -73,7 +73,7 @@ static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 {
 	struct usblink_version version;
 	struct usblink_async_priv *impl = (struct usblink_async_priv *)(transfer->user_data)->impl;
-	assert(transfer && impl);
+	assert(transfer);
 	switch (transfer->status) {
 		case LIBUSB_TRANSFER_COMPLETE:
 			{
@@ -121,8 +121,7 @@ static libusb_device_handle *find_usblink_device(struct libusb_context *context)
 	}
 	libusb_free_device_list(list);
 	if (0 != device) {
-		int r = libusb_open(device, &handle);
-		assert(0 == r);
+		libusb_open(device, &handle);
 	}
 	return handle;
 }
