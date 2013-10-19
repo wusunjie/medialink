@@ -7,7 +7,6 @@ struct usbliink_async_priv;
 
 struct usblink_async {
 	struct usblink_async_priv *impl;
-	struct usblink_async_callback *cb;
 };
 
 struct usblink_async *usblink_async_init(struct usblink_async_callback *cb);
