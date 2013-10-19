@@ -15,7 +15,6 @@ extern const uint8_t USBLINK_CTRL_TRANSFER_TIMEOUT = 10;
 extern const uint8_t USBLINK_CTRL_SETUP_SIZE = 8;
 
 /* get_versoin request constants. */
-extern const uint8_t USBLINK_GET_VERSION_CTRL_SIZE = 12;
 extern const uint8_t USBLINK_GET_VERSION_REQUEST_CODE = 0x40;
 extern const uint8_t USBLINK_GET_VERSION_REQUEST_LENGTH = 2;
 

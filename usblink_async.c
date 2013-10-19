@@ -158,7 +158,7 @@ int usblink_async_get_version(struct usblink_async *async, struct usblink_versio
 {
 	unsigned char *ctrl_buffer = 0;
 	assert(async && version);
-	ctrl_buffer = (unsigned char *)malloc(USBLINK_GET_VERSION_CTRL_SIZE);
+	ctrl_buffer = (unsigned char *)malloc(USBLINK_GET_VERSION_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
 	assert(ctrl_buffer);
 	libusb_fill_control_setup(ctrl_buffer,
 			USBLINK_GET_REQUEST_TYPE,
@@ -178,7 +178,7 @@ int usblink_async_get_params(struct usblink_async *async)
 {
 	unsigned char *ctrl_buffer = 0;
 	assert(async && version);
-	ctrl_buffer = (unsigned char *)malloc(USBLINK_GET_PARAMS_CTRL_SIZE);
+	ctrl_buffer = (unsigned char *)malloc(USBLINK_GET_PARAMS_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
 	assert(ctrl_buffer);
 	libusb_fill_control_setup(ctrl_buffer,
 			USBLINK_GET_REQUEST_TYPE,
