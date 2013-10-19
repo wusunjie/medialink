@@ -61,7 +61,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 			{
 				struct usblink_params params;
 				assert(transfer->buffer && impl->cb &&
-						(USBLINK_CTRL_SETUP_SIZE + USBLINK_GET_PARAMS_REQUEST_LENGTH));
+						(USBLINK_CTRL_SETUP_SIZE + USBLINK_GET_PARAMS_REQUEST_LENGTH == transfer->actual_length));
 				params.bmCapabilities = (uint32_t)transfer->buffer[0];
 				params.wWidth = (uint16_t)transfer->buffer[4];
 				params.wHeight = (uint16_t)transfer->buffer[6];
