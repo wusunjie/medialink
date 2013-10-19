@@ -39,6 +39,8 @@ static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 				usblink_async_ctrl_transfer_complete(impl, transfer);
 			}
 			break;
+		default:
+			break;
 	}
 	usblink_destory_later(impl, 0);
 }
@@ -69,6 +71,8 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 				params.bmEncodingSupported = (uint32_t)transfer->buffer[12];
 				impl->cb->usblink_async_get_params_finish(&params);
 			}
+			break;
+		default:
 			break;
 	}
 	impl->event =  USBLINK_ASYNC_TYPE_NONE;
@@ -117,6 +121,8 @@ static void usblink_async_destory_later(struct usblink_async_priv *impl, unsigne
 					impl->bulk = 0;
 				}
 			}
+			break;
+		default:
 			break;
 	}
 	if ((0 == impl->ctrl)
