@@ -15,11 +15,11 @@ struct usblink_async_callback {
 			struct usblink_version *version);
 	void (*usblink_async_get_params_finish)(
 			struct usblink_params *params);
-	void (*usblink_async_set_config_finish)(unsigned char result);
-	void (*usblink_async_start_fb_trans_finish)(unsigned char result);
-	void (*usblink_async_pause_fb_trans_finish)(unsigned char result);
-	void (*usblink_async_stop_fb_transA)(unsigned char result);
-	void (*usblink_async_set_mfps_finish)(unsigned char result);
+	void (*usblink_async_set_config_finish)(void);
+	void (*usblink_async_start_fb_trans_finish)(void);
+	void (*usblink_async_pause_fb_trans_finish)(void);
+	void (*usblink_async_stop_fb_transA)(void);
+	void (*usblink_async_set_mfps_finish)(void);
 };
 
 extern struct usblink_async *usblink_async_init(struct usblink_async_callback *cb);

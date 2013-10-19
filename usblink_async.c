@@ -9,7 +9,10 @@
 enum usblink_async_type {
 	USBLINK_ASYNC_TYPE_NONE,
 	USBLINK_ASYNC_TYPE_GET_VERSION,
-	USBLINK_ASYNC_TYPE_GET_PARAMS
+	USBLINK_ASYNC_TYPE_GET_PARAMS,
+	USBLINK_ASYNC_TYPE_SET_CONFIG,
+	USBLINK_ASYNC_TYPE_START_FB_TRANS,
+	USBLINK_ASYNC_TYPE_PAUSE_FB_TRANS
 };
 
 struct usblink_async_priv {
@@ -72,6 +75,24 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 				params.bmPixelFormatSupported = (uint32_t)transfer->buffer[8];
 				params.bmEncodingSupported = (uint32_t)transfer->buffer[12];
 				impl->cb->usblink_async_get_params_finish(&params);
+			}
+			break;
+		case USBLINK_ASYNC_TYPE_SET_CONFIG:
+			{
+				assert(impl && impl->cb && impl->cb->usblink_async_set_config_finish);
+				impl->cb->usblink_async_set_config_finish();
+			}
+			break;
+		case USBLINK_ASYNC_TYPE_START_FB_TRANS:
+			{
+				assert(impl && impl->cb && impl->cb->usblink_async_start_fb_trans_finish);
+				impl->cb->usblink_async_start_fb_trans_finish();
+			}
+			break;
+		case USBLINK_ASYNC_TYPE_PAUSE_FB_TRANS:
+			{
+				assert(impl && impl->cb && impl->cb->usblink_async_pause_fb_trans_finish);
+				impl->cb->usblink_async_pause_fb_trans_finish();
 			}
 			break;
 		default:
@@ -205,17 +226,63 @@ int usblink_async_get_params(struct usblink_async *async)
 
 int usblink_async_set_config(struct usblink_async *async, struct usblink_config *config)
 {
-
+	unsigned char *ctrl_buffer = 0;
+	assert(async);
+	ctrl_buffer = (unsigned char *)malloc(USBLINK_SET_CONFIG_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
+	assert(ctrl_buffer);
+	libusb_fill_control_setup(ctrl_buffer,
+			USBLINK_SET_REQUEST_TYPE,
+			USBLINK_SET_CONFIG_REQUEST_CODE,
+			USBLINK_SET_CONFIG_REQUEST_VALUE,
+			USBLINK_INTERFACE_INDEX,
+			USBLINK_SET_CONFIG_REQUEST_LENGTH);
+	async->impl->event = USBLINK_ASYNC_TYPE_SET_CONFIG;
+	memset(ctrl_buffer + USBLINK_CTRL_SETUP_SIZE, config, USBLINK_SET_CONFIG_REQUEST_LENGTH);
+	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
+			ctrl_buffer, usblink_async_ctrl_transfer_cb,
+			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
+	assert(async->impl);
+	return libusb_submit_transfer(async->impl->ctrl);
 }
 
 int usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode)
 {
-
+	unsigned char *ctrl_buffer = 0;
+	assert(async);
+	ctrl_buffer = (unsigned char *)malloc(USBLINK_START_FB_TRANS_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
+	assert(ctrl_buffer);
+	libusb_fill_control_setup(ctrl_buffer,
+			USBLINK_SET_REQUEST_TYPE,
+			USBLINK_START_FB_TRANS_REQUEST_CODE,
+			mode,
+			USBLINK_INTERFACE_INDEX,
+			USBLINK_START_FB_TRANS_REQUEST_LENGTH);
+	async->impl->event = USBLINK_ASYNC_TYPE_START_FB_TRANS;
+	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
+			ctrl_buffer, usblink_async_ctrl_transfer_cb,
+			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
+	assert(async->impl);
+	return libusb_submit_transfer(async->impl->ctrl);
 }
 
 int usblink_async_pause_fb_trans(struct usblink_async *async)
 {
-
+	unsigned char *ctrl_buffer = 0;
+	assert(async);
+	ctrl_buffer = (unsigned char *)malloc(USBLINK_PAUSE_FB_TRANS_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
+	assert(ctrl_buffer);
+	libusb_fill_control_setup(ctrl_buffer,
+			USBLINK_SET_REQUEST_TYPE,
+			USBLINK_PAUSE_FB_TRANS_REQUEST_CODE,
+			USBLINK_PAUSE_FB_TRANS_REQUEST_VALUE,
+			USBLINK_INTERFACE_INDEX,
+			USBLINK_PAUSE_FB_TRANS_REQUEST_LENGTH);
+	async->impl->event = USBLINK_ASYNC_TYPE_PAUSE_FB_TRANS;
+	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
+			ctrl_buffer, usblink_async_ctrl_transfer_cb,
+			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
+	assert(async->impl);
+	return libusb_submit_transfer(async->impl->ctrl);
 }
 
 int usblink_async_stop_fb_trans(struct usblink_async *async)
