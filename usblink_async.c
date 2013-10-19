@@ -22,6 +22,7 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 {
 	struct usblink_async *async = (struct usblink_async *)malloc(sizeof(*async));
 	struct usblink_async_priv *impl = (struct usblink_async_priv *)malloc(sizeof(*impl));
+	assert(async && impl);
 	libusb_init(&(impl->context));
 	impl->handle = find_usblink_device(impl->context);
 	libusb_claim_interface(impl->handle, 0);
