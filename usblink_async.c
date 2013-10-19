@@ -30,6 +30,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->bulk = libusb_alloc_transfer(0);
 	impl->ctrl = libusb_alloc_transfer(0);
 	impl->cb = cb;
+	impl->ctrl_buffer = 0;
+	impl->ctrl_buffer = 0;
 	async->impl = impl;
 	return sync;
 }
@@ -65,6 +67,7 @@ static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 	}
 	if (0 == impl->ctrl_buffer) {
 		free(impl->ctrl_buffer);
+		impl->ctrl_buffer = 0;
 	}
 }
 
