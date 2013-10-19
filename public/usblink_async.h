@@ -6,18 +6,19 @@
 struct usbliink_async_priv;
 
 struct usblink_async {
+	/* NOTE: keep the member first of the structure. */
 	struct usblink_async_priv *impl;
 };
 
 struct usblink_async *usblink_async_init(struct usblink_async_callback *cb);
-void usblink_async_get_version(struct usblink_async *async, struct usblink_version *version);
-void usblink_async_get_params(struct usblink_async *async);
-void usblink_async_set_config(struct usblink_async *async, struct usblink_config *config);
-void usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode);
-void usblink_async_pause_fb_trans(struct usblink_async *async);
-void usblink_async_stop_fb_trans(struct usblink_async *async);
-void usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps);
-void usblink_async_destory(struct usblink_async *async);
+int usblink_async_get_version(struct usblink_async *async, struct usblink_version *version);
+int usblink_async_get_params(struct usblink_async *async);
+int usblink_async_set_config(struct usblink_async *async, struct usblink_config *config);
+int usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode);
+int usblink_async_pause_fb_trans(struct usblink_async *async);
+int usblink_async_stop_fb_trans(struct usblink_async *async);
+int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps);
+int usblink_async_destory(struct usblink_async *async);
 
 struct usblink_async_callback {
 	void (*usblink_async_get_version_finish)(
