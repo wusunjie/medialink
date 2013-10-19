@@ -201,7 +201,6 @@ int usblink_async_get_params(struct usblink_async *async)
 			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
 	assert(async->impl);
 	return libusb_submit_transfer(async->impl->ctrl);
-
 }
 
 int usblink_async_set_config(struct usblink_async *async, struct usblink_config *config)
