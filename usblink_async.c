@@ -61,7 +61,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 		case USBLINK_ASYNC_TYPE_GET_VERSION:
 			{
 				struct usblink_version version;
-				assert(transfer->buffer && impl->cb &&
+				assert(transfer->buffer && impl->cb && impl->cb->usblink_async_get_version_finish &&
 						(USBLINK_CTRL_SETUP_SIZE + USBLINK_GET_VERSION_REQUEST_LENGTH == transfer->actual_length));
 				version.major = ((uint16_t)transfer->buffer[0] << 8) | transfer->buffer[1];
 				version.minor = ((uint16_t)transfer->buffer[2] << 8) | transfer->buffer[3];
@@ -71,7 +71,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 		case USBLINK_ASYNC_TYPE_GET_PARAMS:
 			{
 				struct usblink_params params;
-				assert(transfer->buffer && impl->cb &&
+				assert(transfer->buffer && impl->cb && impl->cb->usblink_async_get_params_finish &&
 						(USBLINK_CTRL_SETUP_SIZE + USBLINK_GET_PARAMS_REQUEST_LENGTH == transfer->actual_length));
 				params.bmCapabilities = (uint32_t)transfer->buffer[0];
 				params.wWidth = (uint16_t)transfer->buffer[4];
