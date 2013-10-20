@@ -5,6 +5,7 @@
 
 #include "stdlib.h"
 #include "stdint.h"
+#include "string.h"
 
 enum usblink_async_type {
 	USBLINK_ASYNC_TYPE_NONE,
@@ -237,7 +238,7 @@ int usblink_async_set_config(struct usblink_async *async, struct usblink_config 
 			USBLINK_INTERFACE_INDEX,
 			USBLINK_SET_CONFIG_REQUEST_LENGTH);
 	async->impl->event = USBLINK_ASYNC_TYPE_SET_CONFIG;
-	memset(ctrl_buffer + USBLINK_CTRL_SETUP_SIZE, config, USBLINK_SET_CONFIG_REQUEST_LENGTH);
+	memcpy(ctrl_buffer + USBLINK_CTRL_SETUP_SIZE, config, USBLINK_SET_CONFIG_REQUEST_LENGTH);
 	libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
 			ctrl_buffer, usblink_async_ctrl_transfer_cb,
 			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
