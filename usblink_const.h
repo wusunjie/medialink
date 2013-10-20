@@ -39,4 +39,13 @@ extern const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_LENGTH;
 extern const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_CODE;
 extern const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_VALUE;
 
+/* stop_framebuffer_transfer request constants. */
+extern const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_LENGTH;
+extern const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_CODE;
+extern const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_VALUE;
+
+/* stop_framebuffer_transfer request constants. */
+extern const uint8_t USBLINK_SET_MFPS_REQUEST_LENGTH;
+extern const uint8_t USBLINK_SET_MFPS_REQUEST_CODE;
+
 #endif

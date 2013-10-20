@@ -6,7 +6,6 @@
 struct usbliink_async_priv;
 
 struct usblink_async {
-	/* NOTE: keep the member first of the structure. */
 	struct usblink_async_priv *impl;
 };
 
@@ -18,7 +17,7 @@ struct usblink_async_callback {
 	void (*usblink_async_set_config_finish)(void);
 	void (*usblink_async_start_fb_trans_finish)(void);
 	void (*usblink_async_pause_fb_trans_finish)(void);
-	void (*usblink_async_stop_fb_transA)(void);
+	void (*usblink_async_stop_fb_trans_finish)(void);
 	void (*usblink_async_set_mfps_finish)(void);
 };
 

@@ -33,5 +33,15 @@ const uint8_t USBLINK_START_FB_TRANS_REQUEST_LENGTH = 8;
 
 /* pause_framebuffer_transfer request constants. */
 const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_LENGTH = 0;
-const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_CODE = 44;
+const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_CODE = 0x44;
 const uint8_t USBLINK_PAUSE_FB_TRANS_REQUEST_VALUE = 0;
+
+/* stop_framebuffer_transfer request constants. */
+const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_LENGTH = 0;
+const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_CODE = 0x45;
+const uint8_t USBLINK_STOP_FB_TRANS_REQUEST_VALUE = 0;
+
+/* stop_framebuffer_transfer request constants. */
+const uint8_t USBLINK_SET_MFPS_REQUEST_LENGTH = 0;
+const uint8_t USBLINK_SET_MFPS_REQUEST_CODE = 0x46;
+
