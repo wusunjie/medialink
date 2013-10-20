@@ -27,7 +27,7 @@ struct usblink_async_priv {
 	struct libusb_transfer *bulk;
 	struct usblink_async_callback *cb;
 	enum usblink_async_type event;
-	unsigned char destory;
+	uint8_t destory;
 };
 
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
