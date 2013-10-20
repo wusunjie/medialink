@@ -219,6 +219,7 @@ void usblink_async_destory(struct usblink_async *async)
 {
 	assert(async);
 	async->impl->destory = 1;
+	usblink_async_destory_later(2);
 }
 
 int usblink_async_get_version(struct usblink_async *async, struct usblink_version *version)
