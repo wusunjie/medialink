@@ -6,6 +6,7 @@
 #include "stdlib.h"
 #include "stdint.h"
 #include "string.h"
+#include "pthread.h"
 
 enum usblink_async_type {
 	USBLINK_ASYNC_TYPE_NONE,
@@ -28,7 +29,11 @@ struct usblink_async_priv {
 	struct usblink_async_callback *cb;
 	enum usblink_async_type event;
 	uint8_t destory;
+	pthread_t poll_thread;
 };
+
+static pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t exit_cond_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer);
@@ -172,6 +177,23 @@ static void usblink_async_destory_later(struct usblink_async *async, unsigned ch
 	}
 }
 
+static void *usblink_async_event_handler(void *args)
+{
+	struct usblink_async_priv *impl = (struct usblink_async_priv *)args;
+	int r = 0;
+	assert(impl);
+	while (0 == impl->destory) {
+		struct timeval tv = {1, 0};
+		r = libusb_handle_events_timeout(0, &tv);
+		if (r < 0) {
+			impl->destory = 1;
+			pthread_cond_signal(&exit_cond);
+			break;
+		}
+	}
+	return 0;
+}
+
 struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 {
 	struct usblink_async *async = (struct usblink_async *)malloc(sizeof(*async));
@@ -188,6 +210,7 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
+	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
 	async->impl = impl;
 	return async;
 }
@@ -343,5 +366,16 @@ int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps)
 			async, USBLINK_CTRL_TRANSFER_TIMEOUT);
 	assert(async->impl);
 	return libusb_submit_transfer(async->impl->ctrl);
+}
+
+void usblink_async_wait_event(struct usblink_async *async)
+{
+	assert(async && async->impl);
+	while (0 == async->impl->destory) {
+		pthread_mutex_lock(&exit_cond_lock);
+		pthread_cond_wait(&exit_cond, &exit_cond_lock);
+		pthread_mutex_unlock(&exit_cond_lock);
+	}
+	pthread_join(async->impl->poll_thread, 0);
 }
 

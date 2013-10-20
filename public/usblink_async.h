@@ -30,5 +30,6 @@ extern int usblink_async_pause_fb_trans(struct usblink_async *async);
 extern int usblink_async_stop_fb_trans(struct usblink_async *async);
 extern int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps);
 extern void usblink_async_destory(struct usblink_async *async);
+extern void usblink_async_wait_event(struct usblink_async *async);
 
 #endif
