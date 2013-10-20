@@ -22,8 +22,8 @@ struct usblink_version {
 };
 
 enum usblink_trans_mode {
-	USBLINK_TRANSMODE_STREAM = 0x0000,
-	USBLINK_TRANSMODE_DEMAND = 0x0001
+	USBLINK_TRANSMODE_STREAM,
+	USBLINK_TRANSMODE_DEMAND
 };
 
 #endif
