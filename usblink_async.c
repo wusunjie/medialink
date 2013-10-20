@@ -262,13 +262,19 @@ int usblink_async_set_config(struct usblink_async *async, struct usblink_config 
 int usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode)
 {
 	unsigned char *ctrl_buffer = 0;
+	uint16_t trans_mode = 0;
 	assert(async);
 	ctrl_buffer = (unsigned char *)malloc(USBLINK_START_FB_TRANS_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
 	assert(ctrl_buffer);
+	if (USBLINK_TRANSMODE_STREAM == mode) {
+		trans_mode = 0x0000;
+	} else {
+		trans_mode = 0x0001;
+	}
 	libusb_fill_control_setup(ctrl_buffer,
 			USBLINK_SET_REQUEST_TYPE,
 			USBLINK_START_FB_TRANS_REQUEST_CODE,
-			mode,
+			trans_mode,
 			USBLINK_INTERFACE_INDEX,
 			USBLINK_START_FB_TRANS_REQUEST_LENGTH);
 	async->impl->event = USBLINK_ASYNC_TYPE_START_FB_TRANS;
