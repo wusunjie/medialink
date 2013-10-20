@@ -30,10 +30,12 @@ struct usblink_async_priv {
 	enum usblink_async_type event;
 	uint8_t destory;
 	pthread_t poll_thread;
+	pthread_cond_t exit_cond;
+	pthread_mutex_t exit_cond_lock;
 };
 
-static pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t exit_cond_lock = PTHREAD_MUTEX_INITIALIZER;
+static const pthread_cond_t local_exit_cond = PTHREAD_COND_INITIALIZER;
+static const pthread_mutex_t local_exit_cond_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer);
@@ -187,7 +189,7 @@ static void *usblink_async_event_handler(void *args)
 		r = libusb_handle_events_timeout(0, &tv);
 		if (r < 0) {
 			impl->destory = 1;
-			pthread_cond_signal(&exit_cond);
+			pthread_cond_signal(&(impl->exit_cond));
 			break;
 		}
 	}
@@ -210,6 +212,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
+	memcpy(&(impl->exit_cond), &local_exit_cond, sizeof(pthread_cond_t));
+	memcpy(&(impl->exit_cond_lock), &local_exit_cond_lock, sizeof(pthread_mutex_t));
 	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
 	async->impl = impl;
 	return async;
@@ -219,7 +223,7 @@ void usblink_async_destory(struct usblink_async *async)
 {
 	assert(async);
 	async->impl->destory = 1;
-	usblink_async_destory_later(2);
+	usblink_async_destory_later(async, 2);
 }
 
 int usblink_async_get_version(struct usblink_async *async, struct usblink_version *version)
@@ -373,9 +377,9 @@ void usblink_async_wait_event(struct usblink_async *async)
 {
 	assert(async && async->impl);
 	while (0 == async->impl->destory) {
-		pthread_mutex_lock(&exit_cond_lock);
-		pthread_cond_wait(&exit_cond, &exit_cond_lock);
-		pthread_mutex_unlock(&exit_cond_lock);
+		pthread_mutex_lock(&(async->impl->exit_cond_lock));
+		pthread_cond_wait(&(async->impl->exit_cond), &(async->impl->exit_cond_lock));
+		pthread_mutex_unlock(&(async->impl->exit_cond_lock));
 	}
 	pthread_join(async->impl->poll_thread, 0);
 }
