@@ -212,8 +212,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
-	memcpy(&(impl->exit_cond), &local_exit_cond, sizeof(pthread_cond_t));
-	memcpy(&(impl->exit_cond_lock), &local_exit_cond_lock, sizeof(pthread_mutex_t));
+	impl->exit_cond = local_exit_cond;
+	impl->exit_cond_lock = local_exit_cond_lock;
 	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
 	async->impl = impl;
 	return async;
