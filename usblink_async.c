@@ -166,16 +166,25 @@ static void usblink_async_destory_later(struct usblink_async *async, unsigned ch
 					async->impl->bulk = 0;
 				}
 				break;
+			case 2:
+				{
+					if (LIBUSB_TRANSFER_COMPLETED == async->impl->ctrl->status) {
+						libusb_free_transfer(async->impl->ctrl);
+						async->impl->ctrl = 0;
+					}
+					if (LIBUSB_TRANSFER_COMPLETED == async->impl->bulk->status) {
+						libusb_free_transfer(async->impl->bulk);
+						async->impl->bulk = 0;
+					}
+				}
+				break;
 			default:
 				break;
 		}
 	}
 	if ((0 == async->impl->ctrl)
 			&& (0 == async->impl->bulk)) {
-		libusb_release_interface(async->impl->handle, 0);
-		libusb_close(async->impl->handle);
-		libusb_exit(async->impl->context);
-		free(async);
+		async->impl->destory = 2;
 	}
 }
 
@@ -376,11 +385,15 @@ int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps)
 void usblink_async_wait_event(struct usblink_async *async)
 {
 	assert(async && async->impl);
-	while (0 == async->impl->destory) {
+	while (2 != async->impl->destory) {
 		pthread_mutex_lock(&(async->impl->exit_cond_lock));
 		pthread_cond_wait(&(async->impl->exit_cond), &(async->impl->exit_cond_lock));
 		pthread_mutex_unlock(&(async->impl->exit_cond_lock));
 	}
 	pthread_join(async->impl->poll_thread, 0);
+	libusb_release_interface(async->impl->handle, 0);
+	libusb_close(async->impl->handle);
+	libusb_exit(async->impl->context);
+	free(async);
 }
 
