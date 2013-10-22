@@ -186,7 +186,9 @@ static void usblink_async_destory_later(struct usblink_async *async, unsigned ch
 	if ((0 == async->impl->ctrl)
 			&& (0 == async->impl->bulk)) {
 		async->impl->destory = 2;
-		pthread_cond_signal(&(impl->exit_cond)); 
+		pthread_mutex_lock(&(async->impl->exit_cond_lock));
+		pthread_cond_signal(&(impl->exit_cond));
+		pthread_mutex_unlock(&(async->impl->exit_cond_lock));
 	}
 }
 
@@ -200,9 +202,10 @@ static void *usblink_async_event_handler(void *args)
 		r = libusb_handle_events_timeout(0, &tv);
 		if (r < 0) {
 			impl->destory = 1;
-			pthread_cond_signal(&(impl->exit_cond));
-			break;
 		}
+		pthread_mutex_lock(&(async->impl->exit_cond_lock));
+		pthread_cond_signal(&(impl->exit_cond));
+		pthread_mutex_unlock(&(async->impl->exit_cond_lock));
 	}
 	return 0;
 }
