@@ -1,6 +1,7 @@
 #ifndef _USBLINK_ASYNC_H
 #define _USBLINK_ASYNC_H
 
+#include <stdint.h>
 #include "usblink_common.h"
 
 struct usbliink_async_priv;
@@ -28,9 +29,10 @@ extern int usblink_async_set_config(struct usblink_async *async, struct usblink_
 extern int usblink_async_start_fb_trans(struct usblink_async *async, enum usblink_trans_mode mode);
 extern int usblink_async_pause_fb_trans(struct usblink_async *async);
 extern int usblink_async_stop_fb_trans(struct usblink_async *async);
-extern int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps);
+extern int usblink_async_set_mfps(struct usblink_async *async, uint8_t mfps);
 extern void usblink_async_destory(struct usblink_async *async);
 /* NOTE: this is a dead loop, call it to handle the event. */
-extern void usblink_async_wait_event(struct usblink_async *async);
+/* NOTE: if return value is zero, indicate the async object has been destoried. */
+extern uint8_t usblink_async_wait_event(struct usblink_async *async);
 
 #endif

@@ -383,7 +383,7 @@ int usblink_async_stop_fb_trans(struct usblink_async *async)
 	}
 }
 
-int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps)
+int usblink_async_set_mfps(struct usblink_async *async, uint8_t mfps)
 {
 	unsigned char *ctrl_buffer = 0;
 	assert(async && async->impl);
@@ -406,19 +406,21 @@ int usblink_async_set_mfps(struct usblink_async *async, unsigned char mfps)
 	}
 }
 
-void usblink_async_wait_event(struct usblink_async *async)
+uint8_t usblink_async_wait_event(struct usblink_async *async)
 {
 	assert(async && async->impl);
 	if (2 != async->impl->destory) {
 		pthread_mutex_lock(&(async->impl->exit_cond_lock));
 		pthread_cond_wait(&(async->impl->exit_cond), &(async->impl->exit_cond_lock));
 		pthread_mutex_unlock(&(async->impl->exit_cond_lock));
+		return 1;
 	} else {
 		pthread_join(async->impl->poll_thread, 0);
 		libusb_release_interface(async->impl->handle, 0);
 		libusb_close(async->impl->handle);
 		libusb_exit(async->impl->context);
 		free(async);
+		return 0;
 	}
 }
 
