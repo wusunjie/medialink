@@ -35,9 +35,6 @@ struct usblink_async_priv {
 	pthread_mutex_t exit_cond_lock;
 };
 
-static const pthread_cond_t local_exit_cond = PTHREAD_COND_INITIALIZER;
-static const pthread_mutex_t local_exit_cond_lock = PTHREAD_MUTEX_INITIALIZER;
-
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer);
 static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl, struct libusb_transfer *transfer);
@@ -199,7 +196,7 @@ static void *usblink_async_event_handler(void *args)
 	assert(impl);
 	while (0 == impl->destory) {
 		struct timeval tv = {1, 0};
-		r = libusb_handle_events_timeout(0, &tv);
+		r = libusb_handle_events_timeout_completed(0, &tv, 0);
 		if (r < 0) {
 			impl->destory = 1;
 		}
@@ -226,8 +223,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
-	impl->exit_cond = local_exit_cond;
-	impl->exit_cond_lock = local_exit_cond_lock;
+	pthread_cond_init(&(impl->exit_cond), 0);
+	pthread_mutex_init(&(impl->exit_cond_lock), 0);
 	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
 	async->impl = impl;
 	return async;
