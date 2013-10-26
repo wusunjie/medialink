@@ -3,11 +3,12 @@
 #include "libusb.h"
 #include "usblink_const.h"
 
-#include "stdlib.h"
-#include "stdint.h"
-#include "string.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <assert.h>
+
 #include "pthread.h"
-#include "assert.h"
 
 enum usblink_async_type {
 	USBLINK_ASYNC_TYPE_NONE,

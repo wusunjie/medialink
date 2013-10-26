@@ -1,7 +1,7 @@
 #ifndef _USBLINK_CONST_H
 #define _USBLINK_CONST_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 extern const uint8_t USBLINK_CLASS;
 extern const uint8_t USBLINK_SUB_CLASS;

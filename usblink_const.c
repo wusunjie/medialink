@@ -1,4 +1,5 @@
 #include "usblink_const.h"
+#include <stdint.h>
 
 const uint8_t USBLINK_CLASS = 0xff;
 const uint8_t USBLINK_SUB_CLASS = 0xcc;

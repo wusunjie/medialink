@@ -1,24 +1,26 @@
 #ifndef _USBLINK_COMMON_H
 #define _USBLINK_COMMON_H
 
+#include <stdint.h>
+
 struct usblink_params {
-	unsigned int bmCapabilities;
-	unsigned short wWidth;
-	unsigned short wHeight;
-	unsigned int bmPixelFormatSupported;
-	unsigned int bmEncodingSupported;
+	uint32_t bmCapabilities;
+	uint16_t wWidth;
+	uint16_t wHeight;
+	uint32_t bmPixelFormatSupported;
+	uint32_t bmEncodingSupported;
 };
 
 struct usblink_config {
-	unsigned int bmCapabilities;
-	unsigned char bPixelFormat;
-	unsigned char wPadding;
-	unsigned int bmEncodingSupported;
+	uint32_t bmCapabilities;
+	uint8_t bPixelFormat;
+	uint8_t wPadding;
+	uint32_t bmEncodingSupported;
 };
 
 struct usblink_version {
-	unsigned char major;
-	unsigned char minor;
+	uint8_t major;
+	uint8_t minor;
 };
 
 enum usblink_trans_mode {
