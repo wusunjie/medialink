@@ -20,6 +20,7 @@ struct usblink_async_callback {
 	void (*usblink_async_pause_fb_trans_finish)(void);
 	void (*usblink_async_stop_fb_trans_finish)(void);
 	void (*usblink_async_set_mfps_finish)(void);
+	void (*usblink_async_frameupdate)(unsigned char *, long);
 };
 
 extern struct usblink_async *usblink_async_init(struct usblink_async_callback *cb);

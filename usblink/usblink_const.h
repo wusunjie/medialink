@@ -12,6 +12,8 @@ extern const uint8_t USBLINK_GET_REQUEST_TYPE;
 extern const uint8_t USBLINK_SET_REQUEST_TYPE;
 /* TODO: timeout time to be determined. temp value 10 ms */
 extern const uint8_t USBLINK_CTRL_TRANSFER_TIMEOUT;
+/* TODO: timeout time to be determined. temp value 10 ms */
+extern const uint8_t USBLINK_BULK_TRANSFER_TIMEOUT;
 extern const uint8_t USBLINK_CTRL_SETUP_SIZE;
 
 /* get_versoin request constants. */

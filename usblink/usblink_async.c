@@ -28,6 +28,9 @@ struct usblink_async_priv {
 	struct libusb_transfer *ctrl;
 	/* bulk transfer for framebuffer */
 	struct libusb_transfer *bulk;
+	unsigned char *framebuffer;
+	long fbsize;
+	uint8_t bulk_ep;
 	struct usblink_async_callback *cb;
 	enum usblink_async_type event;
 	uint8_t destory;
@@ -38,8 +41,20 @@ struct usblink_async_priv {
 
 static libusb_device_handle *usblink_async_find_device(struct libusb_context *context);
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer);
+static void usblink_async_bulk_transfer_cb(struct libusb_transfer *transfer);
 static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl, struct libusb_transfer *transfer);
 static void usblink_async_destory_later(struct usblink_async *async, unsigned char ctrl_bulk);
+
+static void usblink_async_bulk_transfer_cb(struct libusb_transfer *transfer)
+{
+	assert(transfer);
+	struct usblink_async_priv *impl = (struct usblink_async_priv *)(transfer->user_data);
+	assert(impl && impl->cb && impl->cb->usblink_async_frameupdate);
+	impl->cb->usblink_async_frameupdate(impl->framebuffer, impl->fbsize);
+	if (0 != impl->bulk) {
+		libusb_submit_transfer(impl->bulk);
+	}
+}
 
 static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 {
@@ -51,6 +66,16 @@ static void usblink_async_ctrl_transfer_cb(struct libusb_transfer *transfer)
 		case LIBUSB_TRANSFER_COMPLETED:
 			{
 				usblink_async_ctrl_transfer_complete(impl, transfer);
+			}
+			break;
+		case LIBUSB_TRANSFER_CANCELLED:
+			{
+				libusb_free_transfer(impl->bulk);
+				if (0 != impl->framebuffer) {
+					free(impl->framebuffer);
+					impl->fbsize = 0;
+				}
+				impl->bulk = 0;
 			}
 			break;
 		default:
@@ -85,6 +110,14 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 				params.bmPixelFormatSupported = (uint32_t)transfer->buffer[8];
 				params.bmEncodingSupported = (uint32_t)transfer->buffer[12];
 				impl->cb->usblink_async_get_params_finish(&params);
+				/* TODO: calc the framebuffer size */
+				impl->fbsize = 0;
+				if (0 == impl->framebuffer) {
+					impl->framebuffer = (unsigned char *)malloc(impl->fbsize);
+				} else {
+					impl->framebuffer = (unsigned char *)realloc(impl->framebuffer, impl->fbsize);
+				}
+				assert(impl->framebuffer);
 			}
 			break;
 		case USBLINK_ASYNC_TYPE_SET_CONFIG:
@@ -97,6 +130,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 			{
 				assert(impl && impl->cb && impl->cb->usblink_async_start_fb_trans_finish);
 				impl->cb->usblink_async_start_fb_trans_finish();
+				libusb_fill_bulk_transfer(impl->bulk, impl->handle, impl->bulk_ep, impl->framebuffer, impl->fbsize, usblink_async_bulk_transfer_cb, impl, USBLINK_BULK_TRANSFER_TIMEOUT);
 			}
 			break;
 		case USBLINK_ASYNC_TYPE_PAUSE_FB_TRANS:
@@ -109,6 +143,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 			{
 				assert(impl && impl->cb && impl->cb->usblink_async_stop_fb_trans_finish);
 				impl->cb->usblink_async_stop_fb_trans_finish();
+				libusb_cancel_transfer(impl->bulk);
 			}
 			break;
 		case USBLINK_ASYNC_TYPE_SET_MFPS:
@@ -162,6 +197,10 @@ static void usblink_async_destory_later(struct usblink_async *async, unsigned ch
 			case 1:
 				{
 					libusb_free_transfer(async->impl->bulk);
+					if (0 != async->impl->framebuffer) {
+						free(async->impl->framebuffer);
+						async->impl->fbsize = 0;
+					}
 					async->impl->bulk = 0;
 				}
 				break;
@@ -224,6 +263,10 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
 	impl->destory = 0;
+	impl->framebuffer = 0;
+	impl->fbsize = 0;
+	/* TODO: get config for bulk endpoint addr */
+	impl->bulk_ep = 0;
 	pthread_cond_init(&(impl->exit_cond), 0);
 	pthread_mutex_init(&(impl->exit_cond_lock), 0);
 	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
