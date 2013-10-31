@@ -131,6 +131,7 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 				assert(impl && impl->cb && impl->cb->usblink_async_start_fb_trans_finish);
 				impl->cb->usblink_async_start_fb_trans_finish();
 				libusb_fill_bulk_transfer(impl->bulk, impl->handle, impl->bulk_ep, impl->framebuffer, impl->fbsize, usblink_async_bulk_transfer_cb, impl, USBLINK_BULK_TRANSFER_TIMEOUT);
+				libusb_submit_transfer(impl->bulk);
 			}
 			break;
 		case USBLINK_ASYNC_TYPE_PAUSE_FB_TRANS:
