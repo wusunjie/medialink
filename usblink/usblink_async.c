@@ -35,6 +35,8 @@ struct usblink_async_priv {
 	struct usblink_async_callback *cb;
 	enum usblink_async_type event;
 	uint8_t destory;
+	uint16_t height;
+	uint16_t width;
 	pthread_t poll_thread;
 	pthread_cond_t exit_cond;
 	pthread_mutex_t exit_cond_lock;
@@ -124,14 +126,8 @@ static void usblink_async_ctrl_transfer_complete(struct usblink_async_priv *impl
 				params.bmPixelFormatSupported = (uint32_t)transfer->buffer[8];
 				params.bmEncodingSupported = (uint32_t)transfer->buffer[12];
 				impl->cb->usblink_async_get_params_finish(&params);
-				/* TODO: calc the framebuffer size */
-				impl->fbsize = 0;
-				if (0 == impl->framebuffer) {
-					impl->framebuffer = (unsigned char *)malloc(impl->fbsize);
-				} else {
-					impl->framebuffer = (unsigned char *)realloc(impl->framebuffer, impl->fbsize);
-				}
-				assert(impl->framebuffer);
+				impl->height = params.wHeight;
+				impl->width = params.wHeight;
 			}
 			break;
 		case USBLINK_ASYNC_TYPE_SET_CONFIG:
@@ -290,6 +286,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	libusb_claim_interface(impl->handle, USBLINK_INTERFACE_INDEX);
 	/* param set to [0] for non-isochronous */
 	impl->ctrl = libusb_alloc_transfer(0);
+	/* alloc the transfer when start framebuffer */
+	impl->bulk = 0;
 	impl->ctrl->flags = LIBUSB_TRANSFER_FREE_BUFFER;
 	impl->cb = cb;
 	impl->event = USBLINK_ASYNC_TYPE_NONE;
@@ -297,6 +295,8 @@ struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
 	impl->framebuffer = 0;
 	impl->fbsize = 0;
 	impl->trans_mode = USBLINK_TRANSMODE_NONE;
+	impl->height = 0;
+	impl->width = 0;
 	pthread_cond_init(&(impl->exit_cond), 0);
 	pthread_mutex_init(&(impl->exit_cond_lock), 0);
 	pthread_create(&(impl->poll_thread), 0, usblink_async_event_handler, impl);
@@ -361,6 +361,7 @@ int usblink_async_get_params(struct usblink_async *async)
 int usblink_async_set_config(struct usblink_async *async, struct usblink_config *config)
 {
 	unsigned char *ctrl_buffer = 0;
+	uint8_t n_byte = 0;
 	assert(async && async->impl);
 	if (USBLINK_ASYNC_TYPE_NONE == async->impl->event) {
 		ctrl_buffer = (unsigned char *)malloc(USBLINK_SET_CONFIG_REQUEST_LENGTH + USBLINK_CTRL_SETUP_SIZE);
@@ -373,6 +374,30 @@ int usblink_async_set_config(struct usblink_async *async, struct usblink_config 
 				USBLINK_SET_CONFIG_REQUEST_LENGTH);
 		async->impl->event = USBLINK_ASYNC_TYPE_SET_CONFIG;
 		memcpy(ctrl_buffer + USBLINK_CTRL_SETUP_SIZE, config, USBLINK_SET_CONFIG_REQUEST_LENGTH);
+		switch (config->bPixelFormat) {
+			case 0:
+				n_byte = 4;
+				break;
+			case 1:
+				n_byte = 3;
+				break;
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				n_byte = 2;
+				break;
+			default:
+				n_byte = 0;
+				break;
+		}
+		async->impl->fbsize = (async->impl->height * async->impl->width) * n_byte;
+		if (0 == async->impl->framebuffer) {
+			async->impl->framebuffer = (unsigned char *)malloc(async->impl->fbsize);
+		} else {
+			async->impl->framebuffer = (unsigned char *)realloc(async->impl->framebuffer, async->impl->fbsize);
+		}
+		assert(async->impl->framebuffer);
 		libusb_fill_control_transfer(async->impl->ctrl, async->impl->handle,
 				ctrl_buffer, usblink_async_ctrl_transfer_cb,
 				async, USBLINK_CTRL_TRANSFER_TIMEOUT);
