@@ -8,6 +8,7 @@ const uint8_t USBLINK_INTERFACE_INDEX = 0;
 const uint8_t USBLINK_INTERFACE_INDEX = 0;
 const uint8_t USBLINK_GET_REQUEST_TYPE = 0xc1;
 const uint8_t USBLINK_SET_REQUEST_TYPE = 0x41;
+const uint8_t USBLINK_ENDPOINT_BULK_ATTR = 0x02;
 /* TODO: timeout time to be determined. temp value 10 ms */
 const uint8_t USBLINK_CTRL_TRANSFER_TIMEOUT = 10;
 const uint8_t USBLINK_BULK_TRANSFER_TIMEOUT = 10;
