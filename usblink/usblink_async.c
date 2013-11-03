@@ -276,7 +276,7 @@ static void *usblink_async_event_handler(void *args)
 	return 0;
 }
 
-struct usblink_async *usblink_async_init(struct usblink_async_callback *cb)
+struct usblink_async *usblink_async_create(struct usblink_async_callback *cb)
 {
 	struct usblink_async *async = (struct usblink_async *)malloc(sizeof(*async));
 	struct usblink_async_priv *impl = (struct usblink_async_priv *)malloc(sizeof(*impl));
